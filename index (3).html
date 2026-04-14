@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Évaluation risque burn-out — SanensIA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f8f7f4;color:#1a1a18;font-size:15px;line-height:1.6}
+.page{max-width:780px;margin:0 auto;padding:2rem 1.25rem 5rem}
+header{margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid #ddd}
+header h1{font-size:22px;font-weight:600;color:#1a1a18}
+header p{font-size:12px;color:#888;margin-top:4px}
+.progress-label{font-size:12px;color:#666;margin-bottom:5px}
+.progress-outer{height:5px;background:#e0ddd6;border-radius:3px;margin-bottom:2rem}
+.progress-inner{height:5px;border-radius:3px;background:#1D9E75;transition:width .3s}
+.section-header{display:flex;align-items:center;gap:10px;margin:2rem 0 1rem;padding-bottom:8px;border-bottom:1px solid #e5e3dc}
+.dim-tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.dim-label{font-size:14px;font-weight:600;color:#333}
+.q-block{background:#fff;border-radius:10px;border:1px solid #e5e3dc;padding:1rem 1.25rem;margin-bottom:12px}
+.q-text{font-size:13px;color:#444;margin-bottom:12px;line-height:1.5}
+.likert-wrap{display:flex;flex-direction:column;gap:6px}
+.likert-legend{display:flex;justify-content:space-between;font-size:11px;color:#aaa;padding:0 2px}
+.likert-btns{display:flex;gap:6px}
+.likert-btns button{flex:1;height:38px;border:1.5px solid #ddd;background:#fafaf8;border-radius:8px;font-size:13px;font-weight:500;color:#666;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.likert-btns button:hover{border-color:#1D9E75;color:#1D9E75;background:#f0faf6}
+.likert-btns button.selected{border-color:#1D9E75;background:#1D9E75;color:#fff;font-weight:700}
+.btn-calc{display:block;width:100%;padding:14px;margin-top:2rem;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
+.btn-calc:hover{background:#0F6E56}
+.btn-reset{display:block;width:100%;padding:10px;margin-top:8px;background:transparent;color:#aaa;border:1px solid #ddd;border-radius:10px;font-size:13px;cursor:pointer}
+.btn-reset:hover{background:#f5f4f0}
+#results{display:none;margin-top:2.5rem}
+hr.sep{border:none;border-top:1px solid #e5e3dc;margin:2rem 0}
+.score-top{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:1.5rem}
+.score-big-wrap{}
+.score-label{font-size:12px;color:#888;margin-bottom:2px}
+.score-big{font-size:42px;font-weight:700;line-height:1}
+.score-unit{font-size:15px;color:#aaa;margin-left:4px}
+.risk-badge{display:inline-block;padding:7px 18px;border-radius:20px;font-size:14px;font-weight:600}
+.grid-dim{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:1.5rem 0}
+.dim-card{background:#fff;border:1px solid #e5e3dc;border-radius:10px;padding:12px 14px}
+.dim-card .dc-label{font-size:11px;color:#888;margin-bottom:4px}
+.dim-card .dc-val{font-size:24px;font-weight:700}
+.dim-card .dc-unit{font-size:11px;color:#aaa}
+.dc-bar{height:5px;border-radius:3px;background:#eee;margin-top:6px;overflow:hidden}
+.dc-bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.radar-wrap{background:#fff;border:1px solid #e5e3dc;border-radius:10px;padding:1rem;margin:1.5rem 0}
+canvas{width:100%!important}
+.reco-block{border-radius:10px;border:1px solid #e5e3dc;background:#fff;padding:1rem 1.25rem;margin-bottom:10px}
+.reco-block h4{font-size:13px;font-weight:600;margin-bottom:6px}
+.reco-block ul{padding-left:18px}
+.reco-block li{font-size:12px;color:#555;line-height:1.7}
+.source-note{font-size:11px;color:#aaa;margin-top:1.5rem;line-height:1.7;padding:1rem;background:#f5f4f0;border-radius:8px}
+footer{margin-top:3rem;padding-top:1rem;border-top:1px solid #e5e3dc;font-size:11px;color:#aaa;text-align:center}
+@media(max-width:500px){
+  .likert-btns{gap:4px}
+  .likert-btns button{height:34px;font-size:12px;border-radius:6px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <h1>Évaluation du risque burn-out</h1>
+  <p>Modèle MBI (Maslach) · Facteurs organisationnels INRS · Recommandations HAS 2017 · Usage professionnel IPRP/IST</p>
+</header>
+
+<div class="progress-label" id="progress-label">Progression : 0 / 22 questions répondues</div>
+<div class="progress-outer"><div class="progress-inner" id="progress-bar" style="width:0%"></div></div>
+
+<div id="form-area"></div>
+
+<button class="btn-calc" onclick="calculateBurnout()">Calculer mon score →</button>
+<button class="btn-reset" onclick="resetForm()">Réinitialiser le formulaire</button>
+
+<div id="results">
+  <hr class="sep">
+  <div style="font-size:16px;font-weight:600;margin-bottom:16px">Résultats de l'évaluation</div>
+  <div class="score-top">
+    <div class="score-big-wrap">
+      <div class="score-label">Score global de risque</div>
+      <div><span class="score-big" id="score-global">—</span><span class="score-unit">/100</span></div>
+    </div>
+    <div id="risk-badge-wrap"></div>
+  </div>
+  <div class="grid-dim" id="dim-scores"></div>
+  <div class="radar-wrap">
+    <div style="position:relative;height:300px"><canvas id="radarChart"></canvas></div>
+  </div>
+  <hr class="sep">
+  <div style="font-size:15px;font-weight:600;margin-bottom:12px">Recommandations de prévention</div>
+  <div id="recos"></div>
+  <div class="source-note">
+    <strong>Références :</strong> Maslach Burnout Inventory (MBI, 1996) · INRS — RPS et burn-out (ED 6140, 2015) · HAS — Recommandations sur le syndrome d'épuisement professionnel (2017) · Modèles de Karasek &amp; Siegrist.<br>
+    <strong>Note :</strong> Cet outil est une aide à la décision à usage professionnel IPRP/IST. Il ne remplace pas une évaluation clinique. En cas de score élevé, orienter vers le médecin du travail.
+  </div>
+</div>
+
+<footer>SanensIA · <a href="https://laurebonnefond.github.io/sanensia-outils/" style="color:#aaa">sanensia-outils</a> · Données traitées localement — aucun envoi serveur</footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DIMS_DEF = [
+  { key:'ee', label:'Épuisement émotionnel', short:'Épuisement émot.', tag:'Épuisement émotionnel', tagBg:'#E1F5EE', tagColor:'#085041', mbi:'Dimension 1 · MBI-EE' },
+  { key:'dp', label:'Dépersonnalisation', short:'Dépersonnalisation', tag:'Dépersonnalisation', tagBg:'#EEEDFE', tagColor:'#3C3489', mbi:'Dimension 2 · MBI-DP' },
+  { key:'ap', label:'Accomplissement personnel', short:'Accomplissement', tag:'Accomplissement personnel', tagBg:'#EAF3DE', tagColor:'#27500A', mbi:'Dimension 3 · MBI-AP (inversée)' },
+  { key:'org', label:'Facteurs organisationnels', short:'Facteurs org.', tag:'Facteurs organisationnels', tagBg:'#FAEEDA', tagColor:'#633806', mbi:'Dimension 4 · Charge &amp; autonomie (INRS RPS)' },
+  { key:'soc', label:'Soutien social', short:'Soutien social', tag:'Soutien social', tagBg:'#FAECE7', tagColor:'#4A1B0C', mbi:'Dimension 5 · Isolement &amp; reconnaissance' },
+  { key:'sig', label:'Signaux cliniques', short:'Signaux cliniques', tag:"Signaux d'alerte", tagBg:'#E6F1FB', tagColor:'#0C447C', mbi:'Dimension 6 · Manifestations cliniques (HAS 2017)' }
+];
+
+const QUESTIONS = [
+  {id:'q1',dim:'ee',w:2,inv:0,text:"Je me sens émotionnellement épuisé(e) par mon travail."},
+  {id:'q2',dim:'ee',w:2,inv:0,text:"Je me sens à bout à la fin d'une journée de travail."},
+  {id:'q3',dim:'ee',w:2,inv:0,text:"Je me sens fatigué(e) en me levant le matin et à l'idée d'aller travailler."},
+  {id:'q4',dim:'ee',w:1.5,inv:0,text:"Travailler avec des gens tout au long de la journée me demande beaucoup d'efforts."},
+  {id:'q5',dim:'dp',w:2,inv:0,text:"Je sens que je traite certains de mes patients / collègues comme des objets impersonnels."},
+  {id:'q6',dim:'dp',w:2,inv:0,text:"Je suis devenu(e) plus insensible aux autres depuis que j'ai ce travail."},
+  {id:'q7',dim:'dp',w:1.5,inv:0,text:"Je crains que ce travail ne m'endurcisse émotionnellement."},
+  {id:'q8',dim:'dp',w:2,inv:0,text:"Je ne me soucie pas vraiment de ce qui arrive à certaines personnes que j'aide dans mon travail."},
+  {id:'q9',dim:'ap',w:2,inv:1,text:"Je me sens plein(e) d'énergie et d'enthousiasme pour mon travail."},
+  {id:'q10',dim:'ap',w:2,inv:1,text:"Je traite avec efficacité les problèmes de mes patients / usagers."},
+  {id:'q11',dim:'ap',w:2,inv:1,text:"J'ai le sentiment de contribuer positivement au bien-être des autres."},
+  {id:'q12',dim:'ap',w:1.5,inv:1,text:"Je me sens ragaillardi(e) quand j'ai travaillé sur des problèmes avec mes patients / usagers."},
+  {id:'q13',dim:'org',w:2,inv:0,text:"Ma charge de travail est excessive — je n'arrive pas à tout faire dans le temps imparti."},
+  {id:'q14',dim:'org',w:1.5,inv:0,text:"Je dispose d'une faible autonomie pour organiser mon travail à ma façon."},
+  {id:'q15',dim:'org',w:1.5,inv:0,text:"Mon travail comporte des exigences contradictoires ou des conflits de rôles."},
+  {id:'q16',dim:'soc',w:2,inv:0,text:"Mon responsable ou mes collègues m'apportent peu de soutien quand j'en ai besoin."},
+  {id:'q17',dim:'soc',w:2,inv:0,text:"Je me sens isolé(e) dans mon travail, peu reconnu(e) pour mes efforts."},
+  {id:'q18',dim:'soc',w:1.5,inv:0,text:"Il existe une mauvaise communication ou des tensions relationnelles dans mon équipe."},
+  {id:'q19',dim:'sig',w:1.5,inv:0,text:"Je souffre de troubles du sommeil liés aux préoccupations professionnelles."},
+  {id:'q20',dim:'sig',w:1.5,inv:0,text:"Je ressens des symptômes physiques fréquents (maux de tête, douleurs, fatigue) en lien avec le travail."},
+  {id:'q21',dim:'sig',w:1.5,inv:0,text:"J'ai des difficultés de concentration, de mémorisation ou de prise de décision au travail."},
+  {id:'q22',dim:'sig',w:2,inv:0,text:"J'ai eu envie de quitter mon poste ou j'envisage une reconversion à cause de la souffrance au travail."}
+];
+
+const answers = {};
+
+function buildForm() {
+  let html = '';
+  let currentDim = null;
+  QUESTIONS.forEach(q => {
+    if (q.dim !== currentDim) {
+      currentDim = q.dim;
+      const d = DIMS_DEF.find(x => x.key === q.dim);
+      html += `<div class="section-header">
+        <span class="dim-tag" style="background:${d.tagBg};color:${d.tagColor}">${d.tag}</span>
+        <span class="dim-label">${d.mbi}</span>
+      </div>`;
+    }
+    html += `<div class="q-block" id="block-${q.id}">
+      <div class="q-text">${q.text}</div>
+      <div class="likert-wrap">
+        <div class="likert-legend"><span>Jamais</span><span>Rarement</span><span>Parfois</span><span>Souvent</span><span>Toujours</span></div>
+        <div class="likert-btns" id="btns-${q.id}">
+          ${[0,1,2,3,4,5,6].map(v => `<button type="button" onclick="selectAnswer('${q.id}',${v})" id="btn-${q.id}-${v}">${v}</button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('form-area').innerHTML = html;
+}
+
+function selectAnswer(qid, val) {
+  answers[qid] = val;
+  for (let v = 0; v <= 6; v++) {
+    const btn = document.getElementById(`btn-${qid}-${v}`);
+    if (btn) btn.classList.toggle('selected', v === val);
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const n = Object.keys(answers).length;
+  document.getElementById('progress-label').textContent = `Progression : ${n} / 22 questions répondues`;
+  document.getElementById('progress-bar').style.width = Math.round(n/22*100)+'%';
+}
+
+function calculateBurnout() {
+  const missing = QUESTIONS.filter(q => answers[q.id] === undefined);
+  if (missing.length > 0) {
+    alert(`Veuillez répondre à toutes les questions (${missing.length} réponse(s) manquante(s)).`);
+    const firstMissing = document.getElementById('block-'+missing[0].id);
+    if (firstMissing) firstMissing.scrollIntoView({behavior:'smooth'});
+    return;
+  }
+
+  const scores = {};
+  DIMS_DEF.forEach(d => {
+    const qs = QUESTIONS.filter(q => q.dim === d.key);
+    let raw = 0, maxRaw = 0;
+    qs.forEach(q => {
+      const v = answers[q.id];
+      const scored = q.inv ? (6 - v) : v;
+      raw += scored * q.w;
+      maxRaw += 6 * q.w;
+    });
+    scores[d.key] = Math.round(raw / maxRaw * 100);
+  });
+
+  const global = Math.round(Object.values(scores).reduce((a,b)=>a+b,0) / 6);
+  document.getElementById('score-global').textContent = global;
+
+  let level, lc, lbg;
+  if (global < 35) { level='Risque faible'; lc='#085041'; lbg='#E1F5EE'; }
+  else if (global < 55) { level='Risque modéré'; lc='#854F0B'; lbg='#FAEEDA'; }
+  else if (global < 70) { level='Risque élevé'; lc='#712B13'; lbg='#FAECE7'; }
+  else { level='Risque très élevé'; lc='#791F1F'; lbg='#FCEBEB'; }
+  document.getElementById('risk-badge-wrap').innerHTML =
+    `<span class="risk-badge" style="background:${lbg};color:${lc}">${level}</span>`;
+
+  const dimColors = { ee:'#085041', dp:'#3C3489', ap:'#27500A', org:'#633806', soc:'#4A1B0C', sig:'#0C447C' };
+  document.getElementById('dim-scores').innerHTML = DIMS_DEF.map(d => {
+    const s = scores[d.key];
+    const bc = s >= 70 ? '#E24B4A' : s >= 55 ? '#EF9F27' : s >= 35 ? '#BA7517' : '#1D9E75';
+    return `<div class="dim-card">
+      <div class="dc-label">${d.short}</div>
+      <div class="dc-val" style="color:${dimColors[d.key]}">${s}</div>
+      <div class="dc-unit">/100</div>
+      <div class="dc-bar"><div class="dc-bar-fill" style="width:${s}%;background:${bc}"></div></div>
+    </div>`;
+  }).join('');
+
+  if (window._rc) window._rc.destroy();
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  window._rc = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: DIMS_DEF.map(d => d.short),
+      datasets: [{
+        label: 'Profil de risque',
+        data: DIMS_DEF.map(d => scores[d.key]),
+        backgroundColor: 'rgba(29,158,117,0.15)',
+        borderColor: '#1D9E75',
+        pointBackgroundColor: '#1D9E75',
+        pointRadius: 5,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { min:0, max:100, ticks:{ stepSize:25, font:{size:10} }, pointLabels:{ font:{size:11} } } },
+      plugins: { legend:{ display:false } }
+    }
+  });
+
+  document.getElementById('recos').innerHTML = buildRecos(scores, global);
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+
+function buildRecos(scores, global) {
+  const items = [];
+  if (scores.ee >= 55) items.push({t:'Épuisement émotionnel — action prioritaire',bc:'#FCEBEB',tc:'#791F1F',pts:["Réduire la charge de travail immédiatement (concertation manager).","Envisager un aménagement temporaire du poste ou des horaires.","Orienter vers le médecin du travail pour évaluation clinique.","Proposer des séances de soutien psychologique (psychologue du travail, PSSM)."]});
+  else if (scores.ee >= 35) items.push({t:'Épuisement émotionnel — surveillance renforcée',bc:'#FAEEDA',tc:'#854F0B',pts:["Sensibiliser le salarié à l'importance des temps de récupération.","Vérifier l'adéquation charge/ressources lors du prochain entretien.","Proposer des actions de gestion du stress (sophrologie, cohérence cardiaque)."]});
+  if (scores.dp >= 55) items.push({t:'Dépersonnalisation — risque de décrochage relationnel',bc:'#FCEBEB',tc:'#791F1F',pts:["Évaluer l'impact sur la qualité des soins ou des relations professionnelles.","Proposer une supervision clinique ou un groupe de pairs.","Envisager un accompagnement par un médecin psychiatre si besoin."]});
+  else if (scores.dp >= 35) items.push({t:'Dépersonnalisation — vigilance',bc:'#FAEEDA',tc:'#854F0B',pts:["Favoriser les échanges en équipe autour des difficultés relationnelles.","Former à la gestion des émotions et à l'empathie professionnelle."]});
+  if (scores.ap >= 55) items.push({t:"Perte d'accomplissement — désinvestissement professionnel",bc:'#FAECE7',tc:'#712B13',pts:["Identifier avec le salarié ce qui donnait du sens à son travail.","Proposer de nouveaux projets ou responsabilités valorisantes.","Envisager un bilan de compétences ou de carrière.","Consulter le médecin du travail pour un maintien dans l'emploi adapté."]});
+  if (scores.org >= 55) items.push({t:'Facteurs organisationnels — restructuration nécessaire',bc:'#FCEBEB',tc:'#791F1F',pts:["Évaluation formelle du DUERP sur les RPS.","Révision des procédures, des responsabilités et des délais.","Réunion de service avec l'encadrement pour redistribuer les tâches.","Référencer les résultats au référent RPS de l'établissement."]});
+  else if (scores.org >= 35) items.push({t:'Facteurs organisationnels — à améliorer',bc:'#FAEEDA',tc:'#854F0B',pts:["Clarifier les rôles et les priorités avec le manager.","Renforcer l'autonomie dans les marges de manœuvre quotidiennes.","Sensibiliser l'encadrement au management bienveillant."]});
+  if (scores.soc >= 55) items.push({t:'Soutien social insuffisant — isolement professionnel',bc:'#FCEBEB',tc:'#791F1F',pts:["Réunions d'équipe régulières avec espace d'expression sécurisé.","Mise en place d'un binôme ou d'un référent de proximité.","Médiation professionnelle si tensions interpersonnelles avérées."]});
+  else if (scores.soc >= 35) items.push({t:'Soutien social à renforcer',bc:'#FAEEDA',tc:'#854F0B',pts:["Favoriser les rituels d'équipe (cohésion, espaces informels).","Renforcer la culture de la reconnaissance managériale."]});
+  if (scores.sig >= 55) items.push({t:'Signaux cliniques — orientation médicale urgente',bc:'#FCEBEB',tc:'#791F1F',pts:["Consultation en urgence avec le médecin du travail.","Évaluer la nécessité d'un arrêt de travail de courte durée.","Coordonner avec le médecin traitant pour prise en charge globale.","Ne pas minimiser les symptômes somatiques — risques cardiovasculaires associés."]});
+  if (global < 35) items.push({t:'Score global faible — maintien de la prévention primaire',bc:'#E1F5EE',tc:'#085041',pts:["Maintenir une évaluation annuelle des RPS dans le cadre du DUERP.","Promouvoir les facteurs protecteurs : autonomie, reconnaissance, soutien.","Continuer à sensibiliser aux signaux précoces de surmenage."]});
+  if (items.length === 0) items.push({t:'Surveillance de routine recommandée',bc:'#E1F5EE',tc:'#085041',pts:["Proposer un suivi semestriel avec cet outil.","Renforcer les ressources protectrices identifiées.","Intégrer les résultats dans la fiche de prévention de l'établissement."]});
+  return items.map(r =>
+    `<div class="reco-block" style="border-left:3px solid ${r.bc}">
+      <h4 style="color:${r.tc}">${r.t}</h4>
+      <ul>${r.pts.map(p=>`<li>${p}</li>`).join('')}</ul>
+    </div>`
+  ).join('');
+}
+
+function resetForm() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  document.querySelectorAll('.likert-btns button').forEach(b => b.classList.remove('selected'));
+  document.getElementById('results').style.display = 'none';
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+buildForm();
+</script>
+</body>
+</html>
